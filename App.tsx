@@ -199,7 +199,7 @@ const App: React.FC = () => {
     
     // Calculate Log Message
     const coord = getCoordinateString(x, y);
-    let resultStr = isHit ? "Hit" : "Shot missed";
+    let resultStr = isHit ? t.hit : t.miss;
     
     let winner: PlayerType | null = null;
     let nextTurn: PlayerType = isHit ? 'human' : 'ai'; 
@@ -216,8 +216,9 @@ const App: React.FC = () => {
         newAiShips[shipIndex].hits += 1;
         
         if (newAiShips[shipIndex].hits === newAiShips[shipIndex].size) {
-          const shipName = newAiShips[shipIndex].name;
-          resultStr = `Sunk ${shipName}`; // Override result for sink
+          const shipId = newAiShips[shipIndex].id;
+          const shipName = t.ships[shipId as keyof typeof t.ships] || newAiShips[shipIndex].name;
+          resultStr = t.sunk(shipName); 
           playSfx('sunk');
           
           const coords = getShipCoordinates(newAiShips[shipIndex], newAiShips[shipIndex].x, newAiShips[shipIndex].y, newAiShips[shipIndex].orientation);
@@ -282,7 +283,7 @@ const App: React.FC = () => {
     
     // Calculate Log
     const coord = getCoordinateString(target.x, target.y);
-    let resultStr = isHit ? "Hit" : "Shot missed";
+    let resultStr = isHit ? t.enemyHit : t.enemyMiss;
 
     let winner: PlayerType | null = null;
     let nextTurn: PlayerType = isHit ? 'ai' : 'human';
@@ -300,8 +301,9 @@ const App: React.FC = () => {
         newHumanShips[shipIndex].hits += 1;
         
         if (newHumanShips[shipIndex].hits === newHumanShips[shipIndex].size) {
-          const shipName = newHumanShips[shipIndex].name;
-          resultStr = `Sunk ${shipName}`; // Override result
+          const shipId = newHumanShips[shipIndex].id;
+          const shipName = t.ships[shipId as keyof typeof t.ships] || newHumanShips[shipIndex].name;
+          resultStr = t.enemySunk(shipName); 
           playSfx('sunk');
           
            const coords = getShipCoordinates(newHumanShips[shipIndex], newHumanShips[shipIndex].x, newHumanShips[shipIndex].y, newHumanShips[shipIndex].orientation);
@@ -374,10 +376,10 @@ const App: React.FC = () => {
               <div className="flex items-center bg-white dark:bg-white/5 rounded-full p-1 border border-slate-200 dark:border-white/10 shadow-sm">
                 <button 
                   onClick={() => setLang(l => l === 'en' ? 'it' : 'en')}
-                  className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors text-slate-600 dark:text-slate-300"
+                  className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors text-slate-600 dark:text-slate-300 font-bold text-xs"
                   title="Change Language"
                 >
-                  <Globe className="w-4 h-4" />
+                  {lang.toUpperCase()}
                 </button>
                 <button 
                   onClick={() => setTheme(th => th === 'dark' ? 'light' : 'dark')}
@@ -429,6 +431,7 @@ const App: React.FC = () => {
                  setAiEndpoint={setAiEndpoint}
                  difficulty={difficulty}
                  setDifficulty={setDifficulty}
+                 lang={lang}
                />
 
                {/* Game Log - Compact */}
@@ -464,6 +467,7 @@ const App: React.FC = () => {
                     orientation={orientation}
                     onPlaceShip={handlePlaceShip}
                     className="mx-auto"
+                    lang={lang}
                   />
                 </div>
               ) : (
@@ -477,7 +481,7 @@ const App: React.FC = () => {
                       : "scale-[0.98] opacity-80"
                   )}>
                      {/* Enemy Fleet Intel */}
-                     <FleetStatus ships={gameState.aiShips} isEnemy={true} />
+                     <FleetStatus ships={gameState.aiShips} isEnemy={true} lang={lang} />
 
                      <div className={cn(
                        "relative rounded-xl overflow-hidden transition-all duration-300",
@@ -489,6 +493,7 @@ const App: React.FC = () => {
                           ships={gameState.aiShips} 
                           isPlayer={false}
                           onCellClick={handleHumanFire}
+                          lang={lang}
                         />
                         {gameState.turn === 'ai' && (
                           <div className="absolute inset-0 bg-white/10 dark:bg-black/20 backdrop-blur-[1px] rounded-lg z-20 flex items-center justify-center pointer-events-none">
@@ -508,7 +513,7 @@ const App: React.FC = () => {
                        : "scale-[0.98] opacity-80"
                   )}>
                      {/* Allied Fleet Status */}
-                     <FleetStatus ships={gameState.humanShips} isEnemy={false} />
+                     <FleetStatus ships={gameState.humanShips} isEnemy={false} lang={lang} />
 
                      <div className={cn(
                        "relative rounded-xl overflow-hidden transition-all duration-300",
@@ -519,6 +524,7 @@ const App: React.FC = () => {
                          grid={gameState.humanGrid} 
                          ships={gameState.humanShips}
                          isPlayer={true}
+                         lang={lang}
                        />
                      </div>
                   </div>

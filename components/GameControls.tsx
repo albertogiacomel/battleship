@@ -1,8 +1,9 @@
 import React from 'react';
-import { ShipConfig, GamePhase, PlayerType, Grid, PlacedShip, Difficulty } from '../types';
-import { RotateCcw, Shuffle, Play, Trophy, Anchor, Settings2, Link, BrainCircuit } from 'lucide-react';
+import { ShipConfig, GamePhase, PlayerType, Grid, PlacedShip, Difficulty, Language } from '../types';
+import { RotateCcw, Shuffle, Play, Trophy, Settings2, Link, BrainCircuit } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ShipSVG from './ShipSVG';
+import { DICTIONARY } from '../lib/translations';
 
 interface GameControlsProps {
   phase: GamePhase;
@@ -22,6 +23,7 @@ interface GameControlsProps {
   setAiEndpoint: (s: string) => void;
   difficulty: Difficulty;
   setDifficulty: (d: Difficulty) => void;
+  lang: Language;
 }
 
 const GameControls: React.FC<GameControlsProps> = ({
@@ -41,8 +43,11 @@ const GameControls: React.FC<GameControlsProps> = ({
   aiEndpoint,
   setAiEndpoint,
   difficulty,
-  setDifficulty
+  setDifficulty,
+  lang
 }) => {
+  const t = DICTIONARY[lang];
+
   // Stats Calculation
   const calculateStats = () => {
     if (!humanGrid || !aiGrid) return { playerShots: 0, enemyShots: 0, playerFleet: 0, enemyFleet: 0 };
@@ -65,21 +70,19 @@ const GameControls: React.FC<GameControlsProps> = ({
       )}>
         <Trophy className={cn("w-12 h-12 mb-3", winner === 'human' ? "text-amber-500 dark:text-yellow-400" : "text-red-500")} />
         <h2 className="text-2xl font-black mb-1 text-slate-800 dark:text-white">
-          {winner === 'human' ? "VICTORY!" : "DEFEAT"}
+          {winner === 'human' ? t.victoryTitle : t.defeatTitle}
         </h2>
         <p className="text-slate-600 dark:text-ocean-200 mb-4 text-center font-medium text-sm">
-          {winner === 'human' 
-            ? "Admiral, you've neutralized the enemy fleet." 
-            : "Your fleet has been decimated. Better luck next time."}
+          {winner === 'human' ? t.victoryBody : t.defeatBody}
         </p>
         
         <div className="grid grid-cols-2 gap-3 w-full mb-4 text-xs">
            <div className="bg-slate-100 dark:bg-ocean-950/50 p-2 rounded text-center border border-slate-200 dark:border-transparent">
-              <div className="text-slate-500 dark:text-ocean-400 text-[10px] uppercase mb-1 font-bold">Total Shots</div>
+              <div className="text-slate-500 dark:text-ocean-400 text-[10px] uppercase mb-1 font-bold">{t.totalShots}</div>
               <div className="text-lg font-mono font-bold text-slate-800 dark:text-white">{stats.playerShots}</div>
            </div>
            <div className="bg-slate-100 dark:bg-ocean-950/50 p-2 rounded text-center border border-slate-200 dark:border-transparent">
-              <div className="text-slate-500 dark:text-ocean-400 text-[10px] uppercase mb-1 font-bold">Enemy Surviving</div>
+              <div className="text-slate-500 dark:text-ocean-400 text-[10px] uppercase mb-1 font-bold">{t.enemySurviving}</div>
               <div className="text-lg font-mono font-bold text-slate-800 dark:text-white">{stats.enemyFleet} / {aiShips.length}</div>
            </div>
         </div>
@@ -89,7 +92,7 @@ const GameControls: React.FC<GameControlsProps> = ({
           className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 dark:bg-ocean-600 dark:hover:bg-ocean-500 text-white rounded-lg font-bold shadow-lg transition-all active:scale-95 text-sm"
         >
           <RotateCcw className="w-4 h-4" />
-          Play Again
+          {t.playAgain}
         </button>
       </div>
     );
@@ -108,9 +111,9 @@ const GameControls: React.FC<GameControlsProps> = ({
       {/* ... Setup Controls ... */}
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="text-lg font-bold mb-1 text-slate-800 dark:text-white leading-tight">Deploy Fleet</h3>
+          <h3 className="text-lg font-bold mb-1 text-slate-800 dark:text-white leading-tight">{t.deployFleet}</h3>
           <p className="text-slate-500 dark:text-ocean-200 text-xs font-medium">
-            Place ships. Press <span className="font-mono bg-slate-200 dark:bg-ocean-800 px-1 py-0.5 rounded text-slate-700 dark:text-white">R</span> to rotate.
+            {t.deployInstructionsPre} <span className="font-mono bg-slate-200 dark:bg-ocean-800 px-1 py-0.5 rounded text-slate-700 dark:text-white">R</span> {t.deployInstructionsPost}
           </p>
         </div>
         <button 
@@ -128,7 +131,7 @@ const GameControls: React.FC<GameControlsProps> = ({
         <div className="p-3 bg-slate-100 dark:bg-black/20 rounded-lg space-y-3 animate-in slide-in-from-top-2 border border-slate-200 dark:border-white/5">
            <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase text-slate-500 dark:text-ocean-300 flex items-center gap-2">
-                <Link className="w-3 h-3" /> External AI Endpoint
+                <Link className="w-3 h-3" /> {t.externalAi}
               </label>
               <input 
                 type="text" 
@@ -145,7 +148,7 @@ const GameControls: React.FC<GameControlsProps> = ({
       <div className="flex flex-col gap-1.5">
         <span className="text-[10px] font-bold text-slate-400 dark:text-ocean-300 uppercase tracking-wider flex items-center gap-1.5">
           <BrainCircuit className="w-3 h-3" />
-          AI Intelligence
+          {t.aiIntelligence}
         </span>
         <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/5">
           {(['easy', 'medium', 'hard'] as Difficulty[]).map((level) => (
@@ -167,13 +170,13 @@ const GameControls: React.FC<GameControlsProps> = ({
 
       <div className="flex flex-col gap-2 flex-1 min-h-0">
         <div className="flex items-center justify-between">
-           <span className="text-xs font-bold text-slate-400 dark:text-ocean-300 uppercase tracking-wider">Remaining Ships:</span>
+           <span className="text-xs font-bold text-slate-400 dark:text-ocean-300 uppercase tracking-wider">{t.remainingShips}</span>
         </div>
         <div className="space-y-1.5 overflow-y-auto pr-1">
           {unplacedShips.length === 0 ? (
             <div className="text-green-600 dark:text-green-400 font-bold py-2 flex items-center gap-2 text-sm">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              All ships ready!
+              {t.allReady}
             </div>
           ) : (
              unplacedShips.map(ship => (
@@ -186,7 +189,9 @@ const GameControls: React.FC<GameControlsProps> = ({
                      : "border-transparent bg-slate-100 text-slate-600 dark:bg-ocean-800/50 dark:text-gray-300"
                  )}
                >
-                 <span className="z-10 relative truncate mr-2">{ship.name}</span>
+                 <span className="z-10 relative truncate mr-2">
+                  {t.ships[ship.id as keyof typeof t.ships] || ship.name}
+                 </span>
                  {/* Preview of Ship SVG */}
                  <div className="w-16 h-4 relative opacity-80 flex-shrink-0" style={{ transformOrigin: 'center right' }}>
                     <ShipSVG shipId={ship.id} className="w-full h-full" />
@@ -207,7 +212,7 @@ const GameControls: React.FC<GameControlsProps> = ({
           )}
         >
           <RotateCcw className={cn("w-3.5 h-3.5 transition-transform", orientation === 'vertical' ? 'rotate-90' : '')} />
-          Rotate
+          {t.rotate}
         </button>
 
         <button
@@ -219,7 +224,7 @@ const GameControls: React.FC<GameControlsProps> = ({
           )}
         >
           <Shuffle className="w-3.5 h-3.5" />
-          Random
+          {t.random}
         </button>
       </div>
 
@@ -234,7 +239,7 @@ const GameControls: React.FC<GameControlsProps> = ({
         )}
       >
         <Play className="fill-current w-4 h-4" />
-        START BATTLE
+        {t.startBattle}
       </button>
     </div>
   );

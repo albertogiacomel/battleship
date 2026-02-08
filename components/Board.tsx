@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Grid, PlacedShip, ShipConfig, Coordinate } from '../types';
+import { Grid, PlacedShip, ShipConfig, Coordinate, Language } from '../types';
 import Cell from './Cell';
 import ShipGraphic from './ShipGraphic';
 import { getShipCoordinates } from '../lib/gameLogic';
 import { cn } from '../lib/utils';
+import { DICTIONARY } from '../lib/translations';
 
 interface BoardProps {
   grid: Grid;
@@ -16,6 +17,7 @@ interface BoardProps {
   onPlaceShip?: (x: number, y: number) => void;
   className?: string;
   title: string;
+  lang?: Language;
 }
 
 const COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
@@ -31,9 +33,11 @@ const Board: React.FC<BoardProps> = ({
   orientation = 'horizontal',
   onPlaceShip,
   className,
-  title
+  title,
+  lang = 'en'
 }) => {
   const [hoverCoord, setHoverCoord] = useState<Coordinate | null>(null);
+  const t = DICTIONARY[lang];
 
   let previewCoords: Coordinate[] = [];
   let isPreviewValid = false;
@@ -63,8 +67,8 @@ const Board: React.FC<BoardProps> = ({
     <div className={cn("flex flex-col gap-2", className)}>
       <h3 className="text-lg sm:text-xl font-black tracking-wider flex items-center gap-2 drop-shadow-sm text-slate-800 dark:text-ocean-100">
         {title}
-        {isPlayer && <span className="text-[10px] bg-blue-600 dark:bg-ocean-600 text-white px-2 py-0.5 rounded-full shadow-sm align-middle">YOU</span>}
-        {!isPlayer && <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full shadow-sm align-middle">ENEMY</span>}
+        {isPlayer && <span className="text-[10px] bg-blue-600 dark:bg-ocean-600 text-white px-2 py-0.5 rounded-full shadow-sm align-middle">{t.you}</span>}
+        {!isPlayer && <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full shadow-sm align-middle">{t.enemy}</span>}
       </h3>
       
       <div className="flex">
