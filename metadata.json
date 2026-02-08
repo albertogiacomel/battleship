@@ -1,0 +1,5 @@
+{
+  "name": "React Battleship",
+  "description": "A modern, responsive Battleship game featuring smart AI, immersive visual effects, and a sleek dark-mode UI built with Tailwind CSS.",
+  "requestFramePermissions": []
+}

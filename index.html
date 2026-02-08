@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React Battleship</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class', // Enabled class-based dark mode
+        theme: {
+          extend: {
+            colors: {
+              ocean: {
+                50: '#f0f9ff',
+                100: '#e0f2fe',
+                200: '#bae6fd',
+                300: '#7dd3fc',
+                400: '#38bdf8',
+                500: '#0ea5e9',
+                600: '#0284c7',
+                700: '#0369a1',
+                800: '#075985',
+                900: '#0c4a6e',
+                950: '#082f49',
+              },
+              ship: {
+                gray: '#64748b',
+                dark: '#334155'
+              }
+            },
+            animation: {
+              'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'splash': 'splash 0.5s ease-out forwards',
+              'shake': 'shake 0.5s ease-in-out',
+            },
+            keyframes: {
+              splash: {
+                '0%': { transform: 'scale(0)', opacity: '1' },
+                '100%': { transform: 'scale(1.5)', opacity: '0' },
+              },
+              shake: {
+                '0%, 100%': { transform: 'translateX(0)' },
+                '25%': { transform: 'translateX(-2px)' },
+                '75%': { transform: 'translateX(2px)' },
+              }
+            }
+          },
+        },
+      };
+    </script>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.344.0?external=react",
+    "canvas-confetti": "https://esm.sh/canvas-confetti@1.9.2",
+    "clsx": "https://esm.sh/clsx@2.1.0",
+    "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.1",
+    "react-dom/": "https://esm.sh/react-dom@^18.2.0/",
+    "react/": "https://esm.sh/react@^18.2.0/"
+  }
+}
+</script>
+    <style>
+      body {
+        /* Default base styles */
+        background-color: #f8fafc; /* Slate 50 */
+      }
+      
+      /* Dark mode override handled by Tailwind 'dark' class on html */
+      .dark body {
+        background-color: #0f172a; /* Slate 900 */
+      }
+      
+      /* Ship Animation Classes */
+      .ship-container {
+        will-change: transform, filter;
+      }
+
+      @keyframes sink-pulse {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 0.6; }
+      }
+
+      @keyframes subtle-float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-2px); }
+      }
+
+      .ship-sunk {
+        animation: sink-pulse 3s ease-in-out infinite;
+      }
+
+      .ship-alive {
+        animation: subtle-float 4s ease-in-out infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
