@@ -21,7 +21,7 @@ import {
 import Board from './components/Board';
 import GameControls from './components/GameControls';
 import { FleetStatus } from './components/FleetStatus';
-import { Anchor, Radar, Maximize, Sun, Moon, Volume2, VolumeX, Radio, Activity, Target } from 'lucide-react';
+import { Anchor, Radar, Maximize, Sun, Moon, Volume2, VolumeX, Radio, Activity, Target, RotateCcw } from 'lucide-react';
 import { cn } from './lib/utils';
 import { DICTIONARY } from './lib/translations';
 import { playGameSound } from './lib/sound';
@@ -392,6 +392,14 @@ const App: React.FC = () => {
               </div>
 
               <div className="flex items-center bg-white dark:bg-white/5 rounded-full p-1 border border-slate-200 dark:border-white/10 shadow-sm">
+                <button 
+                  onClick={handleReset}
+                  className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors text-slate-600 dark:text-slate-300"
+                  title={t.playAgain}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1"></div>
                 <button 
                   onClick={() => setLang(l => l === 'en' ? 'it' : 'en')}
                   className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors text-slate-600 dark:text-slate-300 font-bold text-xs"
