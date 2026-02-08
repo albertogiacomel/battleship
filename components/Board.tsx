@@ -63,26 +63,31 @@ const Board: React.FC<BoardProps> = ({
     }
   }
 
+  // --- STYLE FIX FOR ROW 10 ---
+  // To ensure rows align perfectly with the grid, the numbers container must simulate 
+  // the EXACT same borders and padding as the grid container, even if transparent.
+  const commonContainerStyles = "border-[2px] sm:border-[3px] p-[2px] sm:p-1 rounded-lg";
+
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
-      <div className="h-8 flex items-center">
-        <h3 className="text-lg sm:text-xl font-black tracking-wider flex items-center gap-2 drop-shadow-sm text-slate-800 dark:text-ocean-100 whitespace-nowrap overflow-hidden">
+    <div className={cn("flex flex-col gap-1 sm:gap-2", className)}>
+      <div className="h-6 sm:h-8 flex items-center">
+        <h3 className="text-base sm:text-xl font-black tracking-wider flex items-center gap-2 drop-shadow-sm text-slate-800 dark:text-ocean-100 whitespace-nowrap overflow-hidden">
           <span className="truncate">{title}</span>
-          {isPlayer && <span className="text-[10px] bg-blue-600 dark:bg-ocean-600 text-white px-2 py-0.5 rounded-full shadow-sm align-middle shrink-0">{t.you}</span>}
-          {!isPlayer && <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full shadow-sm align-middle shrink-0">{t.enemy}</span>}
+          {isPlayer && <span className="text-[9px] sm:text-[10px] bg-blue-600 dark:bg-ocean-600 text-white px-2 py-0.5 rounded-full shadow-sm align-middle shrink-0">{t.you}</span>}
+          {!isPlayer && <span className="text-[9px] sm:text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full shadow-sm align-middle shrink-0">{t.enemy}</span>}
         </h3>
       </div>
       
       <div className="flex">
         {/* Row Numbers (Left Side) */}
-        {/* Changed to Grid to match the board structure perfectly */}
+        {/* FIX: Using grid-rows-10 and applying transparent borders/padding to match the Game Grid exactly */}
         <div className={cn(
-          "grid grid-rows-10 gap-px pr-1.5 text-[8px] sm:text-[10px] font-bold text-slate-400 dark:text-ocean-300 select-none",
-          "py-[2px] sm:py-1",     // Matches Board Padding
-          "my-[2px] sm:my-[3px]"  // Matches Board Border
+          "grid grid-rows-10 gap-px pr-1 sm:pr-2 text-[8px] sm:text-[10px] font-bold text-slate-400 dark:text-ocean-300 select-none",
+          commonContainerStyles,
+          "border-transparent" // Invisible border just for spacing
         )}>
           {ROWS.map(r => (
-            <div key={r} className="flex items-center justify-end w-3 sm:w-5">
+            <div key={r} className="flex items-center justify-end w-3 sm:w-4">
               {r}
             </div>
           ))}
@@ -90,17 +95,18 @@ const Board: React.FC<BoardProps> = ({
 
         <div className="flex-1">
           {/* Column Letters (Top Side) */}
-          <div className="grid grid-cols-10 mb-0.5 text-[8px] sm:text-[10px] font-bold text-slate-400 dark:text-ocean-300 text-center select-none px-[2px]">
+          <div className="grid grid-cols-10 mb-0.5 text-[8px] sm:text-[10px] font-bold text-slate-400 dark:text-ocean-300 text-center select-none px-[2px] sm:px-1">
              {COLS.map(c => <div key={c}>{c}</div>)}
           </div>
 
           {/* The Game Grid */}
           <div 
             className={cn(
-                "grid grid-cols-10 gap-px border-[2px] sm:border-[3px] rounded-lg overflow-hidden p-[2px] sm:p-1 shadow-2xl relative select-none transition-colors",
-                // Light Mode: White Border, Soft Blue Shadow
+                "grid grid-cols-10 gap-px relative select-none transition-colors overflow-hidden shadow-2xl",
+                commonContainerStyles, // Shared sizing logic
+                // Light Mode
                 "bg-slate-200 border-white shadow-blue-200", 
-                // Dark Mode: Dark Blue Border, Dark Shadow
+                // Dark Mode
                 "dark:bg-ocean-900 dark:border-ocean-700 dark:shadow-black/50" 
             )}
             onMouseLeave={() => setHoverCoord(null)}

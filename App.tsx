@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { SHIPS } from './constants';
 import { 
@@ -21,7 +21,7 @@ import {
 import Board from './components/Board';
 import GameControls from './components/GameControls';
 import { FleetStatus } from './components/FleetStatus';
-import { Anchor, Radar, Maximize, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
+import { Anchor, Radar, Maximize, Sun, Moon, Volume2, VolumeX, Radio, Terminal } from 'lucide-react';
 import { cn } from './lib/utils';
 import { DICTIONARY } from './lib/translations';
 import { playGameSound } from './lib/sound';
@@ -37,7 +37,6 @@ const App: React.FC = () => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
       if (saved === 'dark' || saved === 'light') return saved;
-      // Default to dark preference or fallback to dark
       return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     }
     return 'dark';
@@ -46,6 +45,7 @@ const App: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [aiEndpoint, setAiEndpoint] = useState<string>('');
+  const logContainerRef = useRef<HTMLDivElement>(null);
 
   // --- Game State ---
   const [gameState, setGameState] = useState<GameState>({
@@ -69,7 +69,6 @@ const App: React.FC = () => {
 
   // --- Persistence & Initialization ---
   
-  // Load State
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -77,20 +76,16 @@ const App: React.FC = () => {
         const parsed = JSON.parse(saved);
         const loadedState = parsed.gameState;
 
-        // Basic validation: ensure essential arrays exist
         if (
           loadedState &&
           loadedState.phase !== 'setup' &&
           Array.isArray(loadedState.humanGrid) &&
           Array.isArray(loadedState.aiGrid)
         ) {
-           // MIGRATION: Fix 'logs' if missing (breaking change fix for older saves)
            if (!loadedState.logs || !Array.isArray(loadedState.logs)) {
               const oldLog = (loadedState as any).lastLog;
               loadedState.logs = oldLog ? [oldLog] : ["Battle resumed."];
            }
-           
-           // Ensure ships arrays exist
            if (!Array.isArray(loadedState.humanShips)) loadedState.humanShips = [];
            if (!Array.isArray(loadedState.aiShips)) loadedState.aiShips = [];
 
@@ -98,19 +93,17 @@ const App: React.FC = () => {
         }
       } catch (e) {
         console.error("Failed to load save", e);
-        localStorage.removeItem(STORAGE_KEY); // Clear corrupted save
+        localStorage.removeItem(STORAGE_KEY);
       }
     }
   }, []);
 
-  // Save State
   useEffect(() => {
     if (gameState.phase === 'playing' || gameState.phase === 'gameover') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ gameState }));
     }
   }, [gameState]);
 
-  // Apply Theme Class & Persistence
   useEffect(() => {
     localStorage.setItem('theme', theme);
     const root = window.document.documentElement;
@@ -118,7 +111,12 @@ const App: React.FC = () => {
     root.classList.add(theme);
   }, [theme]);
 
-  // Keyboard Shortcut for Rotation
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = 0;
+    }
+  }, [gameState.logs]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -148,20 +146,22 @@ const App: React.FC = () => {
     }
   };
 
-  const getLogColor = (log: string) => {
+  const getLogStyle = (log: string) => {
     const l = log.toLowerCase();
-    if (l.includes('hit') || l.includes('sunk') || l.includes('colpo') || l.includes('affondata')) return 'text-red-600 dark:text-red-400';
-    if (l.includes('miss') || l.includes('mancato')) return 'text-blue-600 dark:text-blue-300';
-    if (l.includes('victory') || l.includes('vittoria')) return 'text-amber-600 dark:text-yellow-400';
-    return 'text-slate-600 dark:text-ocean-200';
+    if (l.includes('hit') || l.includes('sunk') || l.includes('colpo') || l.includes('affondata')) 
+      return 'text-red-400 bg-red-950/30 border-red-900/50';
+    if (l.includes('miss') || l.includes('mancato')) 
+      return 'text-blue-300 bg-blue-950/30 border-blue-900/50';
+    if (l.includes('victory') || l.includes('vittoria')) 
+      return 'text-amber-400 bg-amber-950/30 border-amber-900/50 font-black';
+    return 'text-emerald-400 bg-emerald-950/20 border-emerald-900/30';
   };
 
   const getCoordinateString = (x: number, y: number) => {
     return `${String.fromCharCode(65 + x)}${y + 1}`;
   };
 
-  // --- Setup Handlers ---
-
+  // --- Handlers ---
   const handleRandomize = useCallback(() => {
     const { grid, ships } = randomPlacement();
     setSetupGrid(grid);
@@ -215,8 +215,6 @@ const App: React.FC = () => {
     playSfx('start');
   };
 
-  // --- Game Loop Handlers ---
-
   const handleHumanFire = (x: number, y: number) => {
     if (gameState.phase !== 'playing' || gameState.turn !== 'human') return;
 
@@ -226,7 +224,6 @@ const App: React.FC = () => {
     const isHit = targetCell.status === 'ship';
     let newStatus: 'hit' | 'miss' = isHit ? 'hit' : 'miss';
     
-    // Calculate Log Message
     const coord = getCoordinateString(x, y);
     let resultStr = isHit ? t.hit : t.miss;
     
@@ -263,7 +260,7 @@ const App: React.FC = () => {
       playSfx('miss');
     }
 
-    const logMessage = `Player: ${coord} - ${resultStr}`;
+    const logMessage = `COM: ${coord} >> ${resultStr}`;
 
     setGameState(prev => ({
       ...prev,
@@ -279,7 +276,6 @@ const App: React.FC = () => {
   const handleAITurn = useCallback(async () => {
     const { humanGrid, humanShips } = gameState;
     
-    // AI Calculation
     let target: Coordinate;
     if (aiEndpoint && aiEndpoint.trim() !== '') {
         try {
@@ -305,12 +301,10 @@ const App: React.FC = () => {
         target = calculateAIMove(humanGrid, difficulty);
     }
     
-    // Process Shot
     const targetCell = humanGrid[target.y][target.x];
     const isHit = targetCell.status === 'ship';
     let newStatus: 'hit' | 'miss' = isHit ? 'hit' : 'miss';
     
-    // Calculate Log
     const coord = getCoordinateString(target.x, target.y);
     let resultStr = isHit ? t.enemyHit : t.enemyMiss;
 
@@ -347,7 +341,7 @@ const App: React.FC = () => {
       playSfx('miss');
     }
 
-    const logMessage = `AI: ${coord} - ${resultStr}`;
+    const logMessage = `CPU: ${coord} >> ${resultStr}`;
 
     setGameState(prev => ({
       ...prev,
@@ -363,21 +357,16 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (gameState.phase === 'playing' && gameState.turn === 'ai' && !gameState.winner) {
-      // Delay for dramatic effect
       const timer = setTimeout(handleAITurn, 1000);
       return () => clearTimeout(timer);
     }
   }, [gameState.phase, gameState.turn, gameState.winner, handleAITurn]);
 
-  // --- Render ---
-
   return (
     <div className="h-[100dvh] w-full font-sans selection:bg-blue-500/30 transition-colors duration-500 bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col overflow-hidden">
-      {/* Background decoration */}
       <div className="fixed inset-0 -z-10 transition-colors duration-500 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100 via-slate-100 to-slate-200 dark:from-ocean-900/40 dark:via-slate-950 dark:to-slate-950"></div>
       
       <div className="w-full h-full flex flex-col max-w-[1400px] mx-auto p-3 sm:p-4">
-        {/* Header - Fixed Top */}
         <header className="flex-none mb-4 flex flex-row items-center justify-between border-b border-slate-300 dark:border-ocean-800/50 pb-3 gap-2 transition-colors z-20">
            <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 rounded-lg shadow-lg bg-blue-600 dark:bg-ocean-600 text-white shadow-blue-500/30 dark:shadow-ocean-500/20">
@@ -391,7 +380,6 @@ const App: React.FC = () => {
               </div>
            </div>
 
-           {/* Menu Controls */}
            <div className="flex items-center gap-2">
               <div className={cn(
                 "hidden sm:flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full border shadow-sm transition-colors mr-2",
@@ -406,28 +394,24 @@ const App: React.FC = () => {
                 <button 
                   onClick={() => setLang(l => l === 'en' ? 'it' : 'en')}
                   className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors text-slate-600 dark:text-slate-300 font-bold text-xs"
-                  title="Change Language"
                 >
                   {lang.toUpperCase()}
                 </button>
                 <button 
                   onClick={() => setTheme(th => th === 'dark' ? 'light' : 'dark')}
                   className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors text-slate-600 dark:text-slate-300"
-                  title="Toggle Theme"
                 >
                   {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </button>
                 <button 
                   onClick={() => setSoundEnabled(s => !s)}
                   className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors text-slate-600 dark:text-slate-300"
-                  title="Toggle Sound"
                 >
                   {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                 </button>
                 <button 
                   onClick={toggleFullScreen}
                   className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors text-slate-600 dark:text-slate-300 hidden sm:block"
-                  title="Fullscreen"
                 >
                   <Maximize className="w-4 h-4" />
                 </button>
@@ -435,12 +419,9 @@ const App: React.FC = () => {
            </div>
         </header>
 
-        {/* Main Game Area - Scrollable Container */}
         <main className="flex-1 overflow-y-auto min-h-0 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-ocean-700">
-           {/* Inner wrapper ensures centering if content is small, but allows scroll if content is large */}
            <div className="min-h-full flex flex-col md:flex-row gap-4 items-center justify-center py-2">
             
-            {/* Controls / Status Panel - Side or Bottom */}
             <div className="w-full md:w-64 lg:w-72 xl:w-80 flex-shrink-0 order-2 md:order-1 flex flex-col gap-4">
                <GameControls 
                  phase={gameState.phase}
@@ -463,43 +444,49 @@ const App: React.FC = () => {
                  lang={lang}
                />
 
-               {/* Game Log - Scrollable List */}
+               {/* --- IMPROVED LIVE FEED --- */}
                {gameState.phase !== 'setup' && (
-                 <div className={cn(
-                   "flex flex-col rounded-xl border h-[250px] overflow-hidden shadow-inner transition-colors relative shrink-0",
-                   "bg-white/80 border-slate-200 shadow-slate-200/50", 
-                   "dark:bg-black/40 dark:border-white/10 dark:shadow-none"
-                 )}>
-                    <div className="p-3 bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/5 flex items-center gap-2 text-slate-500 dark:text-gray-400 text-[10px] uppercase tracking-wider font-bold shrink-0">
-                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                       Live Feed
+                 <div className="flex flex-col rounded-xl overflow-hidden shadow-xl border border-slate-700/50 bg-slate-900/90 dark:bg-black/60 backdrop-blur-md h-[280px] shrink-0 transform transition-all">
+                    {/* Terminal Header */}
+                    <div className="px-3 py-2 bg-slate-800/80 dark:bg-white/5 border-b border-slate-600/30 flex items-center justify-between shrink-0">
+                       <div className="flex items-center gap-2">
+                         <Terminal className="w-3 h-3 text-emerald-500" />
+                         <span className="text-[10px] font-mono font-bold text-emerald-500 uppercase tracking-widest">Tactical Log</span>
+                       </div>
+                       <div className="flex gap-1.5">
+                         <div className="w-1.5 h-1.5 rounded-full bg-red-500/50"></div>
+                         <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50"></div>
+                         <div className="w-1.5 h-1.5 rounded-full bg-green-500/50"></div>
+                       </div>
                     </div>
                     
-                    <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-ocean-700 space-y-1 relative">
-                       {/* Ensure gameState.logs is an array before mapping to prevent crashes on state corruption */}
-                       {Array.isArray(gameState.logs) && gameState.logs.map((log, i) => (
-                         <div key={i} className={cn(
-                           "text-xs sm:text-sm font-mono py-1 px-1.5 rounded border-l-2 transition-all animate-in fade-in slide-in-from-left-1",
-                           i === 0 
-                              ? "bg-slate-100 dark:bg-white/10 border-blue-500 dark:border-ocean-400 font-bold sticky top-0 z-10 shadow-sm" 
-                              : "border-transparent opacity-70",
-                           getLogColor(log)
-                         )}>
-                           <span className="opacity-50 mr-1.5 text-[10px]">{i === 0 ? '>' : '#'}</span>
-                           {log}
-                         </div>
-                       ))}
+                    {/* Log Content */}
+                    <div ref={logContainerRef} className="flex-1 overflow-y-auto p-3 scrollbar-thin scrollbar-thumb-slate-600 space-y-2 font-mono text-xs relative bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAuMiIvPgo8L3N2Zz4=')]">
+                       {Array.isArray(gameState.logs) && gameState.logs.length > 0 ? (
+                         gameState.logs.map((log, i) => (
+                           <div key={i} className={cn(
+                             "py-1.5 px-2.5 rounded border-l-2 shadow-sm animate-in slide-in-from-left-2 duration-300",
+                             getLogStyle(log),
+                             i === 0 ? "opacity-100 scale-100" : "opacity-60 scale-[0.98]"
+                           )}>
+                             <div className="flex justify-between items-center opacity-70 mb-0.5">
+                               <span className="text-[9px] uppercase tracking-wide font-bold">{i === 0 ? 'LATEST' : 'LOG -' + i}</span>
+                               <span className="text-[9px]">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+                             </div>
+                             <div className="font-bold tracking-tight">{log}</div>
+                           </div>
+                         ))
+                       ) : (
+                         <div className="text-slate-500 italic text-center py-4 opacity-50">System Initialized...</div>
+                       )}
                        
-                       {/* Gradient fade at bottom to indicate scroll */}
-                       <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white/80 dark:from-black/80 to-transparent pointer-events-none sticky"></div>
+                       <div className="sticky bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none"></div>
                     </div>
                  </div>
                )}
             </div>
 
-            {/* Boards Container - Stable Layout */}
             <div className="flex-1 w-full order-1 md:order-2 flex flex-col items-center justify-center">
-              
               {gameState.phase === 'setup' ? (
                 <div className="max-w-md lg:max-w-lg mx-auto w-full animate-in zoom-in duration-500">
                   <Board 
@@ -517,17 +504,11 @@ const App: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex flex-row flex-wrap xl:flex-nowrap gap-4 sm:gap-6 justify-center items-start content-start w-full">
-                  
-                  {/* Enemy Board + Intel */}
                   <div className={cn(
                     "relative transition-all duration-500 w-full flex-1 max-w-[450px] min-w-[300px] flex flex-col gap-2",
-                    gameState.turn === 'human' 
-                      ? "scale-100 opacity-100"
-                      : "scale-[0.98] opacity-80"
+                    gameState.turn === 'human' ? "scale-100 opacity-100" : "scale-[0.98] opacity-80"
                   )}>
-                     {/* Enemy Fleet Intel */}
                      <FleetStatus ships={gameState.aiShips} isEnemy={true} lang={lang} />
-
                      <div className={cn(
                        "relative rounded-xl overflow-hidden transition-all duration-300 aspect-square",
                        gameState.turn === 'human' && "ring-4 ring-blue-500/30 dark:ring-ocean-500/30 shadow-2xl"
@@ -542,7 +523,8 @@ const App: React.FC = () => {
                         />
                         {gameState.turn === 'ai' && (
                           <div className="absolute inset-0 bg-white/10 dark:bg-black/20 backdrop-blur-[1px] rounded-lg z-20 flex items-center justify-center pointer-events-none">
-                             <span className="text-blue-900 dark:text-white font-black animate-pulse tracking-widest bg-white/80 dark:bg-black/50 px-4 py-2 rounded border border-blue-200 dark:border-white/10 shadow-lg text-sm sm:text-base">
+                             <span className="text-blue-900 dark:text-white font-black animate-pulse tracking-widest bg-white/80 dark:bg-black/50 px-4 py-2 rounded border border-blue-200 dark:border-white/10 shadow-lg text-sm sm:text-base flex items-center gap-2">
+                               <Radio className="w-4 h-4 animate-ping" />
                                {t.enemyTargeting}
                              </span>
                           </div>
@@ -550,16 +532,11 @@ const App: React.FC = () => {
                      </div>
                   </div>
 
-                  {/* Player Board + Status */}
                   <div className={cn(
                      "relative transition-all duration-500 w-full flex-1 max-w-[450px] min-w-[300px] flex flex-col gap-2",
-                     gameState.turn === 'ai' 
-                       ? "scale-100"
-                       : "scale-[0.98] opacity-80"
+                     gameState.turn === 'ai' ? "scale-100" : "scale-[0.98] opacity-80"
                   )}>
-                     {/* Allied Fleet Status */}
                      <FleetStatus ships={gameState.humanShips} isEnemy={false} lang={lang} />
-
                      <div className={cn(
                        "relative rounded-xl overflow-hidden transition-all duration-300 aspect-square",
                        gameState.turn === 'ai' && "ring-4 ring-red-400/50 dark:ring-red-500/30 shadow-2xl"
