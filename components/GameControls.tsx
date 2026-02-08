@@ -179,25 +179,30 @@ const GameControls: React.FC<GameControlsProps> = ({
               {t.allReady}
             </div>
           ) : (
-             unplacedShips.map(ship => (
-               <div 
-                 key={ship.id}
-                 className={cn(
-                   "flex items-center justify-between p-2 rounded-lg border transition-all font-medium overflow-hidden text-sm",
-                   currentShip?.id === ship.id 
-                     ? "border-blue-500 bg-blue-50 text-blue-900 dark:border-ocean-400 dark:bg-ocean-700/50 dark:text-white scale-[1.01] shadow-sm"
-                     : "border-transparent bg-slate-100 text-slate-600 dark:bg-ocean-800/50 dark:text-gray-300"
-                 )}
-               >
-                 <span className="z-10 relative truncate mr-2">
-                  {t.ships[ship.id as keyof typeof t.ships] || ship.name}
-                 </span>
-                 {/* Preview of Ship SVG */}
-                 <div className="w-16 h-4 relative opacity-80 flex-shrink-0" style={{ transformOrigin: 'center right' }}>
-                    <ShipSVG shipId={ship.id} className="w-full h-full" />
+             unplacedShips.map(ship => {
+               const shipName = t.ships[ship.id as keyof typeof t.ships] || ship.name;
+               return (
+                 <div 
+                   key={ship.id}
+                   className={cn(
+                     "flex flex-col sm:flex-row sm:items-center justify-between p-2 rounded-lg border transition-all font-medium overflow-hidden text-sm gap-2 sm:gap-0",
+                     currentShip?.id === ship.id 
+                       ? "border-blue-500 bg-blue-50 text-blue-900 dark:border-ocean-400 dark:bg-ocean-700/50 dark:text-white scale-[1.01] shadow-sm"
+                       : "border-transparent bg-slate-100 text-slate-600 dark:bg-ocean-800/50 dark:text-gray-300"
+                   )}
+                 >
+                   <span className="z-10 relative truncate text-xs sm:text-sm font-bold mr-2 w-full sm:w-auto">
+                    {shipName}
+                   </span>
+                   {/* Preview of Ship SVG - scaled down to fit */}
+                   <div className="h-4 sm:h-5 w-full sm:w-20 relative opacity-90 flex-shrink-0 flex items-center justify-start sm:justify-end">
+                      <div className="w-full h-full max-w-[80px]">
+                        <ShipSVG shipId={ship.id} className="w-full h-full" />
+                      </div>
+                   </div>
                  </div>
-               </div>
-             ))
+               );
+             })
           )}
         </div>
       </div>

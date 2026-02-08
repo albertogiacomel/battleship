@@ -489,7 +489,7 @@ const App: React.FC = () => {
                   
                   {/* Enemy Board + Intel */}
                   <div className={cn(
-                    "relative transition-all duration-500 w-full flex-1 max-w-[450px] flex flex-col gap-2",
+                    "relative transition-all duration-500 w-full flex-1 max-w-[450px] min-w-[300px] flex flex-col gap-2",
                     gameState.turn === 'human' 
                       ? "scale-100 opacity-100"
                       : "scale-[0.98] opacity-80"
@@ -498,7 +498,7 @@ const App: React.FC = () => {
                      <FleetStatus ships={gameState.aiShips} isEnemy={true} lang={lang} />
 
                      <div className={cn(
-                       "relative rounded-xl overflow-hidden transition-all duration-300",
+                       "relative rounded-xl overflow-hidden transition-all duration-300 aspect-square",
                        gameState.turn === 'human' && "ring-4 ring-blue-500/30 dark:ring-ocean-500/30 shadow-2xl"
                      )}>
                         <Board 
@@ -521,7 +521,7 @@ const App: React.FC = () => {
 
                   {/* Player Board + Status */}
                   <div className={cn(
-                     "relative transition-all duration-500 w-full flex-1 max-w-[450px] flex flex-col gap-2",
+                     "relative transition-all duration-500 w-full flex-1 max-w-[450px] min-w-[300px] flex flex-col gap-2",
                      gameState.turn === 'ai' 
                        ? "scale-100"
                        : "scale-[0.98] opacity-80"
@@ -530,7 +530,7 @@ const App: React.FC = () => {
                      <FleetStatus ships={gameState.humanShips} isEnemy={false} lang={lang} />
 
                      <div className={cn(
-                       "relative rounded-xl overflow-hidden transition-all duration-300",
+                       "relative rounded-xl overflow-hidden transition-all duration-300 aspect-square",
                        gameState.turn === 'ai' && "ring-4 ring-red-400/50 dark:ring-red-500/30 shadow-2xl"
                      )}>
                        <Board 
